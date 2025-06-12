@@ -4,6 +4,7 @@ import {
   loginLogs,
   adminActions,
   trustpilotReviews,
+  shiftSchedules,
   type User,
   type UpsertUser,
   type AttendanceRecord,
@@ -12,6 +13,8 @@ import {
   type InsertLoginLog,
   type TrustpilotReview,
   type InsertTrustpilotReview,
+  type ShiftSchedule,
+  type InsertShiftSchedule,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, count, sql, isNull } from "drizzle-orm";
@@ -286,7 +289,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(shiftSchedules)
-      .orderBy(shiftSchedules.startDate);
+      .orderBy(shiftSchedules.agentName);
   }
 
   async getSchedulesByTeam(team: string): Promise<ShiftSchedule[]> {
@@ -294,7 +297,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(shiftSchedules)
       .where(eq(shiftSchedules.team, team))
-      .orderBy(shiftSchedules.startDate);
+      .orderBy(shiftSchedules.agentName);
   }
 
   async getUserSchedule(userId: number): Promise<ShiftSchedule | undefined> {
@@ -302,7 +305,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(shiftSchedules)
       .where(eq(shiftSchedules.userId, userId))
-      .orderBy(desc(shiftSchedules.startDate))
+      .orderBy(desc(shiftSchedules.createdAt))
       .limit(1);
     
     return result[0];

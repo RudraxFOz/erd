@@ -9,6 +9,7 @@ import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import ModeratorDashboard from "@/pages/ModeratorDashboard";
 import AdminDashboard from "@/pages/AdminDashboard";
+import Schedule from "@/pages/Schedule";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -37,6 +38,7 @@ function Router() {
           <Route path="/dashboard">
             {user?.role === "admin" ? <AdminDashboard /> : <ModeratorDashboard />}
           </Route>
+          <Route path="/schedule" component={Schedule} />
         </>
       )}
       <Route component={NotFound} />

@@ -243,6 +243,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Shift Schedule Routes
+  app.get('/api/schedules', requireAuth, async (req: any, res: any) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      let schedules;
+      if (user.role === 'admin') {
+        const team = req.query.team as string;
+        schedules = team ? await storage.getSchedulesByTeam(team) : await storage.getAllSchedules();
+      } else {
+        const userSchedule = await storage.getUserSchedule(req.session.userId);
+        schedules = userSchedule ? [userSchedule] : [];
+      }
+
+      res.json(schedules);
+    } catch (error) {
+      console.error("Error fetching schedules:", error);
+      res.status(500).json({ message: "Failed to fetch schedules" });
+    }
+  });
+
+  app.get('/api/schedules/my-schedule', requireAuth, async (req: any, res: any) => {
+    try {
+      const schedule = await storage.getUserSchedule(req.session.userId);
+      res.json(schedule || null);
+    } catch (error) {
+      console.error("Error fetching user schedule:", error);
+      res.status(500).json({ message: "Failed to fetch schedule" });
+    }
+  });
+
+  app.post('/api/admin/schedules', requireAdmin, async (req: any, res: any) => {
+    try {
+      const scheduleData = insertShiftScheduleSchema.parse(req.body);
+      const schedule = await storage.createSchedule(scheduleData);
+      
+      const ipAddress = getClientIP(req);
+      await storage.logAdminAction(
+        req.session.userId,
+        'created_shift_schedule',
+        scheduleData.userId,
+        `Schedule for ${scheduleData.agentName} on ${scheduleData.team} team`,
+        ipAddress
+      );
+
+      res.json(schedule);
+    } catch (error) {
+      console.error("Error creating schedule:", error);
+      res.status(500).json({ message: "Failed to create schedule" });
+    }
+  });
+
+  app.put('/api/admin/schedules/:scheduleId', requireAdmin, async (req: any, res: any) => {
+    try {
+      const scheduleId = parseInt(req.params.scheduleId);
+      const scheduleData = insertShiftScheduleSchema.partial().parse(req.body);
+      
+      await storage.updateSchedule(scheduleId, scheduleData);
+      
+      const ipAddress = getClientIP(req);
+      await storage.logAdminAction(
+        req.session.userId,
+        'updated_shift_schedule',
+        scheduleData.userId,
+        `Updated schedule ID: ${scheduleId}`,
+        ipAddress
+      );
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating schedule:", error);
+      res.status(500).json({ message: "Failed to update schedule" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
