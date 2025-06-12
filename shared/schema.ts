@@ -107,6 +107,21 @@ export const shiftSchedules = pgTable("shift_schedules", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Disciplinary actions table for strikes and warnings
+export const disciplinaryActions = pgTable("disciplinary_actions", {
+  id: serial("id").primaryKey(),
+  moderatorId: integer("moderator_id").notNull().references(() => users.id),
+  adminId: integer("admin_id").notNull().references(() => users.id),
+  type: varchar("type", { enum: ["warning", "strike"] }).notNull(),
+  reason: text("reason").notNull(),
+  description: text("description"),
+  severity: varchar("severity", { enum: ["low", "medium", "high"] }).default("medium").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  expiresAt: timestamp("expires_at"), // For warnings that expire
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   password: true,
@@ -170,6 +185,16 @@ export const insertShiftScheduleSchema = createInsertSchema(shiftSchedules).pick
   timezone: true,
 });
 
+export const insertDisciplinaryActionSchema = createInsertSchema(disciplinaryActions).pick({
+  moderatorId: true,
+  adminId: true,
+  type: true,
+  reason: true,
+  description: true,
+  severity: true,
+  expiresAt: true,
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type AttendanceRecord = typeof attendanceRecords.$inferSelect;
@@ -181,3 +206,5 @@ export type TrustpilotReview = typeof trustpilotReviews.$inferSelect;
 export type InsertTrustpilotReview = z.infer<typeof insertTrustpilotReviewSchema>;
 export type ShiftSchedule = typeof shiftSchedules.$inferSelect;
 export type InsertShiftSchedule = z.infer<typeof insertShiftScheduleSchema>;
+export type DisciplinaryAction = typeof disciplinaryActions.$inferSelect;
+export type InsertDisciplinaryAction = z.infer<typeof insertDisciplinaryActionSchema>;

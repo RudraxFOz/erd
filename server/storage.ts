@@ -5,6 +5,7 @@ import {
   adminActions,
   trustpilotReviews,
   shiftSchedules,
+  disciplinaryActions,
   type User,
   type UpsertUser,
   type AttendanceRecord,
@@ -15,6 +16,8 @@ import {
   type InsertTrustpilotReview,
   type ShiftSchedule,
   type InsertShiftSchedule,
+  type DisciplinaryAction,
+  type InsertDisciplinaryAction,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte, count, sql, isNull } from "drizzle-orm";
@@ -58,6 +61,14 @@ export interface IStorage {
   getUserSchedule(userId: number): Promise<ShiftSchedule | undefined>;
   createSchedule(schedule: InsertShiftSchedule): Promise<ShiftSchedule>;
   updateSchedule(scheduleId: number, schedule: Partial<InsertShiftSchedule>): Promise<void>;
+  
+  // Disciplinary actions
+  createDisciplinaryAction(action: InsertDisciplinaryAction): Promise<DisciplinaryAction>;
+  getModeratorDisciplinaryActions(moderatorId: number): Promise<DisciplinaryAction[]>;
+  getAllDisciplinaryActions(): Promise<DisciplinaryAction[]>;
+  getActiveDisciplinaryActions(moderatorId: number): Promise<DisciplinaryAction[]>;
+  updateDisciplinaryAction(actionId: number, updates: Partial<InsertDisciplinaryAction>): Promise<void>;
+  deactivateDisciplinaryAction(actionId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -332,6 +343,67 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(shiftSchedules.id, scheduleId));
+  }
+
+  async createDisciplinaryAction(action: InsertDisciplinaryAction): Promise<DisciplinaryAction> {
+    const result = await db
+      .insert(disciplinaryActions)
+      .values({
+        ...action,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    
+    return result[0];
+  }
+
+  async getModeratorDisciplinaryActions(moderatorId: number): Promise<DisciplinaryAction[]> {
+    return await db
+      .select()
+      .from(disciplinaryActions)
+      .where(eq(disciplinaryActions.moderatorId, moderatorId))
+      .orderBy(desc(disciplinaryActions.createdAt));
+  }
+
+  async getAllDisciplinaryActions(): Promise<DisciplinaryAction[]> {
+    return await db
+      .select()
+      .from(disciplinaryActions)
+      .orderBy(desc(disciplinaryActions.createdAt));
+  }
+
+  async getActiveDisciplinaryActions(moderatorId: number): Promise<DisciplinaryAction[]> {
+    return await db
+      .select()
+      .from(disciplinaryActions)
+      .where(
+        and(
+          eq(disciplinaryActions.moderatorId, moderatorId),
+          eq(disciplinaryActions.isActive, true)
+        )
+      )
+      .orderBy(desc(disciplinaryActions.createdAt));
+  }
+
+  async updateDisciplinaryAction(actionId: number, updates: Partial<InsertDisciplinaryAction>): Promise<void> {
+    await db
+      .update(disciplinaryActions)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(disciplinaryActions.id, actionId));
+  }
+
+  async deactivateDisciplinaryAction(actionId: number): Promise<void> {
+    await db
+      .update(disciplinaryActions)
+      .set({
+        isActive: false,
+        updatedAt: new Date()
+      })
+      .where(eq(disciplinaryActions.id, actionId));
   }
 }
 
