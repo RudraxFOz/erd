@@ -181,7 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trustpilot Review Routes
-  app.post('/api/reviews/submit', requireAuth, async (req: any, res: any) => {
+  app.post('/api/trustpilot/reviews', requireAuth, async (req: any, res: any) => {
     try {
       const moderatorId = req.session.userId;
       const reviewData = insertTrustpilotReviewSchema.parse({

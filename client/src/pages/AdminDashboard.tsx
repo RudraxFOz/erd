@@ -24,8 +24,16 @@ import {
   Ban,
   MoreVertical,
   Wifi,
-  MapPin
+  MapPin,
+  Star,
+  Eye,
+  CheckCircle,
+  XCircle,
+  MessageSquare
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 export default function AdminDashboard() {
   const { toast } = useToast();

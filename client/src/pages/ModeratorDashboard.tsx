@@ -183,7 +183,7 @@ export default function ModeratorDashboard() {
       
       const isWeekend = index >= 5;
       const isToday = date.toDateString() === today.toDateString();
-      const hasAttendance = attendanceHistory.some((record: any) => 
+      const hasAttendance = Array.isArray(attendanceHistory) && attendanceHistory.some((record: any) => 
         new Date(record.date).toDateString() === date.toDateString()
       );
 
@@ -243,275 +243,453 @@ export default function ModeratorDashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Quick Actions */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Attendance Card */}
-            <Card className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Today's Attendance
-                  </CardTitle>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Live</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="text-center">
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-100 dark:border-blue-800">
-                      {attendanceLoading ? (
-                        <Skeleton className="w-16 h-16 rounded-full mx-auto mb-4" />
-                      ) : (
-                        <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <Clock className="text-white text-xl" />
-                        </div>
-                      )}
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Status</p>
-                      {attendanceLoading ? (
-                        <Skeleton className="h-6 w-20 mx-auto mb-2" />
-                      ) : (
-                        <p className="text-lg font-semibold text-green-600 dark:text-green-400">
-                          {todayAttendance ? "Marked" : "Not Marked"}
-                        </p>
-                      )}
-                      {todayAttendance && (
-                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                          {new Date(todayAttendance.date).toLocaleTimeString([], { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+        <Tabs defaultValue="attendance" className="space-y-8">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="attendance">Attendance</TabsTrigger>
+            <TabsTrigger value="trustpilot">Trustpilot Reviews</TabsTrigger>
+          </TabsList>
 
-                  <div className="space-y-4">
-                    <Button 
-                      onClick={() => markAttendanceMutation.mutate()}
-                      disabled={!!todayAttendance || markAttendanceMutation.isPending}
-                      className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 px-6 font-medium hover:from-blue-600 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-150 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          <TabsContent value="attendance">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left Column - Quick Actions */}
+              <div className="lg:col-span-2 space-y-8">
+                {/* Attendance Card */}
+                <Card className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
+                        Today's Attendance
+                      </CardTitle>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">Live</span>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="text-center">
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-100 dark:border-blue-800">
+                          {attendanceLoading ? (
+                            <Skeleton className="w-16 h-16 rounded-full mx-auto mb-4" />
+                          ) : (
+                            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <Clock className="text-white text-xl" />
+                            </div>
+                          )}
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Status</p>
+                          {attendanceLoading ? (
+                            <Skeleton className="h-6 w-20 mx-auto mb-2" />
+                          ) : (
+                            <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                              {todayAttendance ? "Marked" : "Not Marked"}
+                            </p>
+                          )}
+                          {todayAttendance && (
+                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                              {new Date(todayAttendance.date).toLocaleTimeString([], { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <Button 
+                          onClick={() => markAttendanceMutation.mutate()}
+                          disabled={!!todayAttendance || markAttendanceMutation.isPending}
+                          className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 px-6 font-medium hover:from-blue-600 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-150 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        >
+                          {markAttendanceMutation.isPending ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Marking...
+                            </>
+                          ) : (
+                            <>
+                              <Fingerprint className="mr-2 w-4 h-4" />
+                              {todayAttendance ? "Already Marked" : "Mark Attendance"}
+                            </>
+                          )}
+                        </Button>
+                        
+                        {todayAttendance && (
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-3">
+                              <div className="flex items-center mb-1">
+                                <MapPin className="w-3 h-3 text-gray-500 mr-1" />
+                                <p className="text-gray-500 dark:text-gray-400">Location</p>
+                              </div>
+                              <p className="font-medium text-gray-900 dark:text-white">
+                                {(todayAttendance as any)?.location || "Unknown"}
+                              </p>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-3">
+                              <div className="flex items-center mb-1">
+                                <Wifi className="w-3 h-3 text-gray-500 mr-1" />
+                                <p className="text-gray-500 dark:text-gray-400">IP Address</p>
+                              </div>
+                              <p className="font-medium text-gray-900 dark:text-white text-xs">
+                                {(todayAttendance as any)?.ipAddress}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Weekly Calendar */}
+                <Card className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
+                        Weekly Overview
+                      </CardTitle>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                          Current Week
+                        </span>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {historyLoading ? (
+                      <div className="grid grid-cols-7 gap-2">
+                        {Array.from({ length: 7 }).map((_, i) => (
+                          <Skeleton key={i} className="h-16 w-full" />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-7 gap-2">
+                        {weeklyData.map((day, index) => (
+                          <div key={index} className="text-center">
+                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                              {day.day}
+                            </p>
+                            <div 
+                              className={`w-full h-12 rounded-lg flex items-center justify-center border ${
+                                day.isWeekend 
+                                  ? 'bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-gray-600' 
+                                  : day.hasAttendance
+                                    ? 'bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800'
+                                    : day.isToday
+                                      ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-600'
+                                      : 'bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800'
+                              }`}
+                            >
+                              {day.isWeekend ? (
+                                <span className="text-gray-400 text-xs">Off</span>
+                              ) : day.hasAttendance ? (
+                                <CheckCircle className="text-green-600 dark:text-green-400 text-sm" />
+                              ) : day.isToday ? (
+                                <Clock className="text-blue-600 dark:text-blue-400 text-sm" />
+                              ) : (
+                                <XCircle className="text-red-600 dark:text-red-400 text-sm" />
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{day.date}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Right Column - Stats */}
+              <div className="space-y-6">
+                {/* Stats Cards */}
+                <Card className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+                      This Month
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {statsLoading ? (
+                      Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Skeleton className="w-10 h-10 rounded-lg" />
+                            <div>
+                              <Skeleton className="h-4 w-20 mb-1" />
+                              <Skeleton className="h-3 w-16" />
+                            </div>
+                          </div>
+                          <Skeleton className="h-6 w-8" />
+                        </div>
+                      ))
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                              <CheckCircle className="text-green-600 dark:text-green-400 w-5 h-5" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">Present Days</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">This month</p>
+                            </div>
+                          </div>
+                          <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                            {(userStats as any)?.presentDays || 0}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                              <TrendingUp className="text-blue-600 dark:text-blue-400 w-5 h-5" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">Working Days</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">This month</p>
+                            </div>
+                          </div>
+                          <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                            {(userStats as any)?.workingDays || 0}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                              <CheckCircle className="text-purple-600 dark:text-purple-400 w-5 h-5" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">Attendance Rate</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">This month</p>
+                            </div>
+                          </div>
+                          <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                            {(userStats as any)?.attendanceRate || 0}%
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Recent Activity */}
+                <Card className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Recent Activity
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {statsLoading ? (
+                      Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                          <Skeleton className="w-8 h-8 rounded-full" />
+                          <div className="flex-1">
+                            <Skeleton className="h-4 w-24 mb-1" />
+                            <Skeleton className="h-3 w-20" />
+                          </div>
+                        </div>
+                      ))
+                    ) : (userStats as any)?.recentActivity?.length > 0 ? (
+                      (userStats as any).recentActivity.map((activity: any, index: number) => (
+                        <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                          <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                            <LogOut className="text-blue-600 dark:text-blue-400 text-xs" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">Logged in</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {new Date(activity.loginTime).toLocaleDateString()} at{' '}
+                              {new Date(activity.loginTime).toLocaleTimeString([], { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No recent activity</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="trustpilot">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Trustpilot Review Form */}
+              <Card className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                    <Star className="w-5 h-5 mr-2 text-yellow-500" />
+                    Submit Trustpilot Review
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmitReview} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="customerName">Customer Name *</Label>
+                        <Input
+                          id="customerName"
+                          value={reviewForm.customerName}
+                          onChange={(e) => setReviewForm(prev => ({ ...prev, customerName: e.target.value }))}
+                          placeholder="Enter customer name"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="customerEmail">Customer Email *</Label>
+                        <Input
+                          id="customerEmail"
+                          type="email"
+                          value={reviewForm.customerEmail}
+                          onChange={(e) => setReviewForm(prev => ({ ...prev, customerEmail: e.target.value }))}
+                          placeholder="Enter customer email"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="rating">Rating *</Label>
+                      <div className="flex items-center space-x-2 mt-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setReviewForm(prev => ({ ...prev, rating: star }))}
+                            className={`w-8 h-8 ${star <= reviewForm.rating ? 'text-yellow-500' : 'text-gray-300'}`}
+                          >
+                            <Star className="w-full h-full fill-current" />
+                          </button>
+                        ))}
+                        <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                          {reviewForm.rating} star{reviewForm.rating !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="reviewText">Review Text *</Label>
+                      <Textarea
+                        id="reviewText"
+                        value={reviewForm.reviewText}
+                        onChange={(e) => setReviewForm(prev => ({ ...prev, reviewText: e.target.value }))}
+                        placeholder="Enter the customer's review"
+                        rows={4}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="businessResponse">Business Response</Label>
+                      <Textarea
+                        id="businessResponse"
+                        value={reviewForm.businessResponse}
+                        onChange={(e) => setReviewForm(prev => ({ ...prev, businessResponse: e.target.value }))}
+                        placeholder="Enter business response (optional)"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="screenshot">Screenshot Upload</Label>
+                      <div className="mt-2">
+                        <Input
+                          id="screenshot"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleScreenshotUpload}
+                          className="mb-2"
+                        />
+                        {screenshotFile && (
+                          <div className="text-sm text-green-600 dark:text-green-400">
+                            ✓ Screenshot uploaded: {screenshotFile.name}
+                          </div>
+                        )}
+                        {reviewForm.screenshotUrl && (
+                          <div className="mt-2">
+                            <img
+                              src={reviewForm.screenshotUrl}
+                              alt="Screenshot preview"
+                              className="max-w-full h-32 object-contain border border-gray-300 dark:border-gray-600 rounded"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      disabled={submitReviewMutation.isPending}
+                      className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white"
                     >
-                      {markAttendanceMutation.isPending ? (
+                      {submitReviewMutation.isPending ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Marking...
+                          Submitting...
                         </>
                       ) : (
                         <>
-                          <Fingerprint className="mr-2 w-4 h-4" />
-                          {todayAttendance ? "Already Marked" : "Mark Attendance"}
+                          <Send className="w-4 h-4 mr-2" />
+                          Submit Review
                         </>
                       )}
                     </Button>
-                    
-                    {todayAttendance && (
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-3">
-                          <div className="flex items-center mb-1">
-                            <MapPin className="w-3 h-3 text-gray-500 mr-1" />
-                            <p className="text-gray-500 dark:text-gray-400">Location</p>
-                          </div>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {todayAttendance.location || "Unknown"}
-                          </p>
-                        </div>
-                        <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-3">
-                          <div className="flex items-center mb-1">
-                            <Wifi className="w-3 h-3 text-gray-500 mr-1" />
-                            <p className="text-gray-500 dark:text-gray-400">IP Address</p>
-                          </div>
-                          <p className="font-medium text-gray-900 dark:text-white text-xs">
-                            {todayAttendance.ipAddress}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  </form>
+                </CardContent>
+              </Card>
 
-            {/* Weekly Calendar */}
-            <Card className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Weekly Overview
+              {/* Review Guidelines */}
+              <Card className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                    <MessageSquare className="w-5 h-5 mr-2 text-blue-500" />
+                    Review Guidelines
                   </CardTitle>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Current Week
-                    </span>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Screenshot Requirements:</h4>
+                    <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                      <li>• Clear, high-quality images</li>
+                      <li>• Show relevant review content</li>
+                      <li>• Include customer information if visible</li>
+                      <li>• Acceptable formats: JPG, PNG, GIF</li>
+                    </ul>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {historyLoading ? (
-                  <div className="grid grid-cols-7 gap-2">
-                    {Array.from({ length: 7 }).map((_, i) => (
-                      <Skeleton key={i} className="h-16 w-full" />
-                    ))}
+                  
+                  <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                    <h4 className="font-medium text-green-900 dark:text-green-100 mb-2">Review Process:</h4>
+                    <ul className="text-sm text-green-800 dark:text-green-200 space-y-1">
+                      <li>• Reviews are submitted for admin approval</li>
+                      <li>• Screenshots help verify authenticity</li>
+                      <li>• Include complete customer details</li>
+                      <li>• Business responses are optional</li>
+                    </ul>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-7 gap-2">
-                    {weeklyData.map((day, index) => (
-                      <div key={index} className="text-center">
-                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-                          {day.day}
-                        </p>
-                        <div 
-                          className={`w-full h-12 rounded-lg flex items-center justify-center border ${
-                            day.isWeekend 
-                              ? 'bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-gray-600' 
-                              : day.hasAttendance
-                                ? 'bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800'
-                                : day.isToday
-                                  ? 'bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-300 dark:border-blue-600'
-                                  : 'bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800'
-                          }`}
-                        >
-                          {day.isWeekend ? (
-                            <span className="text-gray-400 text-xs">Off</span>
-                          ) : day.hasAttendance ? (
-                            <CheckCircle className="text-green-600 dark:text-green-400 text-sm" />
-                          ) : day.isToday ? (
-                            <Clock className="text-blue-600 dark:text-blue-400 text-sm" />
-                          ) : (
-                            <XCircle className="text-red-600 dark:text-red-400 text-sm" />
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{day.date}</p>
-                      </div>
-                    ))}
+
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+                    <h4 className="font-medium text-yellow-900 dark:text-yellow-100 mb-2">Important Notes:</h4>
+                    <ul className="text-sm text-yellow-800 dark:text-yellow-200 space-y-1">
+                      <li>• Ensure customer consent for submission</li>
+                      <li>• Verify review authenticity</li>
+                      <li>• Follow company guidelines</li>
+                      <li>• Screenshots are securely stored</li>
+                    </ul>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Stats */}
-          <div className="space-y-6">
-            {/* Stats Cards */}
-            <Card className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-                  This Month
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {statsLoading ? (
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Skeleton className="w-10 h-10 rounded-lg" />
-                        <div>
-                          <Skeleton className="h-4 w-20 mb-1" />
-                          <Skeleton className="h-3 w-16" />
-                        </div>
-                      </div>
-                      <Skeleton className="h-6 w-8" />
-                    </div>
-                  ))
-                ) : (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                          <CheckCircle className="text-green-600 dark:text-green-400 w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">Present Days</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">This month</p>
-                        </div>
-                      </div>
-                      <span className="text-lg font-bold text-gray-900 dark:text-white">
-                        {userStats?.presentDays || 0}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
-                          <XCircle className="text-red-600 dark:text-red-400 w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">Working Days</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">This month</p>
-                        </div>
-                      </div>
-                      <span className="text-lg font-bold text-gray-900 dark:text-white">
-                        {userStats?.workingDays || 0}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                          <TrendingUp className="text-blue-600 dark:text-blue-400 w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">Attendance Rate</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">This month</p>
-                        </div>
-                      </div>
-                      <span className="text-lg font-bold text-green-600 dark:text-green-400">
-                        {userStats?.attendanceRate || 0}%
-                      </span>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Recent Activity */}
-            <Card className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Recent Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {statsLoading ? (
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                      <Skeleton className="w-8 h-8 rounded-full" />
-                      <div className="flex-1">
-                        <Skeleton className="h-4 w-24 mb-1" />
-                        <Skeleton className="h-3 w-20" />
-                      </div>
-                    </div>
-                  ))
-                ) : userStats?.recentActivity?.length > 0 ? (
-                  userStats.recentActivity.map((activity: any, index: number) => (
-                    <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                      <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                        <LogOut className="text-blue-600 dark:text-blue-400 text-xs" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">Logged in</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(activity.loginTime).toLocaleDateString()} at{' '}
-                          {new Date(activity.loginTime).toLocaleTimeString([], { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">No recent activity</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
