@@ -78,6 +78,7 @@ export const trustpilotReviews = pgTable("trustpilot_reviews", {
   rating: integer("rating").notNull(), // 1-5 stars
   reviewText: text("review_text").notNull(),
   businessResponse: text("business_response"),
+  screenshotUrl: text("screenshot_url"), // URL or base64 data for screenshot
   status: varchar("status", { enum: ["pending", "approved", "rejected"] }).default("pending").notNull(),
   adminReviewId: integer("admin_review_id").references(() => users.id),
   adminComments: text("admin_comments"),
@@ -128,6 +129,7 @@ export const insertTrustpilotReviewSchema = createInsertSchema(trustpilotReviews
   rating: true,
   reviewText: true,
   businessResponse: true,
+  screenshotUrl: true,
 });
 
 export const reviewReviewSchema = z.object({

@@ -40,8 +40,11 @@ export default function ModeratorDashboard() {
     customerEmail: '',
     rating: 5,
     reviewText: '',
-    businessResponse: ''
+    businessResponse: '',
+    screenshotUrl: ''
   });
+
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
 
   // Track login on component mount
   useEffect(() => {
@@ -108,6 +111,63 @@ export default function ModeratorDashboard() {
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
+  };
+
+  // Handle screenshot file upload
+  const handleScreenshotUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Convert to base64 for storage
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64String = e.target?.result as string;
+        setReviewForm(prev => ({ ...prev, screenshotUrl: base64String }));
+        setScreenshotFile(file);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Submit Trustpilot review mutation
+  const submitReviewMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/trustpilot/reviews", reviewForm),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/trustpilot/reviews"] });
+      toast({
+        title: "Success!",
+        description: "Trustpilot review submitted successfully",
+      });
+      // Reset form
+      setReviewForm({
+        customerName: '',
+        customerEmail: '',
+        rating: 5,
+        reviewText: '',
+        businessResponse: '',
+        screenshotUrl: ''
+      });
+      setScreenshotFile(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit review",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmitReview = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewForm.customerName || !reviewForm.customerEmail || !reviewForm.reviewText) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    submitReviewMutation.mutate();
   };
 
   // Generate weekly calendar data
