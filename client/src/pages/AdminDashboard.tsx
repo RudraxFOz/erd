@@ -39,6 +39,8 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
+  const [selectedReview, setSelectedReview] = useState<any>(null);
+  const [reviewComments, setReviewComments] = useState('');
 
   // Fetch admin stats
   const { data: adminStats, isLoading: statsLoading } = useQuery({
@@ -48,6 +50,11 @@ export default function AdminDashboard() {
   // Fetch moderators data
   const { data: moderatorsData, isLoading: moderatorsLoading } = useQuery({
     queryKey: ["/api/admin/moderators"],
+  });
+
+  // Fetch Trustpilot reviews
+  const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
+    queryKey: ["/api/admin/reviews"],
   });
 
   // Toggle user status mutation
@@ -82,6 +89,28 @@ export default function AdminDashboard() {
       toast({
         title: "Logout failed",
         description: error.message || "Failed to logout",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Review approval mutation
+  const reviewMutation = useMutation({
+    mutationFn: ({ reviewId, status, comments }: { reviewId: number; status: string; comments?: string }) =>
+      apiRequest("POST", `/api/admin/reviews/${reviewId}/review`, { status, adminComments: comments }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+      setSelectedReview(null);
+      setReviewComments('');
+      toast({
+        title: "Success!",
+        description: "Review status updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update review",
         variant: "destructive",
       });
     },
@@ -150,8 +179,16 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Admin Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Tabs defaultValue="dashboard" className="space-y-8">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="moderators">Moderators</TabsTrigger>
+            <TabsTrigger value="reviews">Trustpilot Reviews</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard">
+            {/* Admin Overview Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {statsLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
               <Card key={i} className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700">
@@ -481,6 +518,303 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+      </TabsContent>
+
+          <TabsContent value="moderators">
+            <Card className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Moderator Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {moderatorsLoading ? (
+                  <div className="space-y-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <Skeleton className="w-10 h-10 rounded-full" />
+                          <div>
+                            <Skeleton className="h-4 w-32 mb-2" />
+                            <Skeleton className="h-3 w-24" />
+                          </div>
+                        </div>
+                        <Skeleton className="w-20 h-8" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Moderator</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(moderatorsData as any)?.moderators?.map((moderator: any) => (
+                        <TableRow key={moderator.id}>
+                          <TableCell>
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                                  {moderator.firstName?.[0]}{moderator.lastName?.[0]}
+                                </span>
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  {moderator.firstName} {moderator.lastName}
+                                </p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-gray-600 dark:text-gray-400">
+                            {moderator.email}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={moderator.isActive ? "default" : "secondary"}>
+                              {moderator.isActive ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleStatusMutation.mutate({
+                                userId: moderator.id,
+                                isActive: !moderator.isActive
+                              })}
+                              disabled={toggleStatusMutation.isPending}
+                            >
+                              {moderator.isActive ? "Deactivate" : "Activate"}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reviews">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Reviews List */}
+              <div className="lg:col-span-2">
+                <Card className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                      <MessageSquare className="w-5 h-5 mr-2 text-blue-500" />
+                      Trustpilot Reviews
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {reviewsLoading ? (
+                      <div className="space-y-4">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <div key={i} className="p-4 border rounded-lg">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <Skeleton className="h-4 w-32 mb-2" />
+                                <Skeleton className="h-3 w-48" />
+                              </div>
+                              <Skeleton className="w-16 h-6" />
+                            </div>
+                            <Skeleton className="h-12 w-full mb-3" />
+                            <Skeleton className="h-8 w-24" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {(reviewsData as any)?.map((review: any) => (
+                          <div 
+                            key={review.id} 
+                            className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                              selectedReview?.id === review.id 
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                                : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                            }`}
+                            onClick={() => setSelectedReview(review)}
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-gray-900 dark:text-white">
+                                  {review.customerName}
+                                </h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  {review.customerEmail}
+                                </p>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <div className="flex">
+                                  {Array.from({ length: 5 }).map((_, i) => (
+                                    <Star 
+                                      key={i} 
+                                      className={`w-4 h-4 ${
+                                        i < review.rating 
+                                          ? 'text-yellow-500 fill-current' 
+                                          : 'text-gray-300'
+                                      }`} 
+                                    />
+                                  ))}
+                                </div>
+                                <Badge 
+                                  variant={
+                                    review.status === 'approved' ? 'default' :
+                                    review.status === 'rejected' ? 'destructive' : 'secondary'
+                                  }
+                                >
+                                  {review.status}
+                                </Badge>
+                              </div>
+                            </div>
+                            
+                            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
+                              {review.reviewText}
+                            </p>
+                            
+                            {review.screenshotUrl && (
+                              <div className="flex items-center space-x-2 text-sm text-blue-600 dark:text-blue-400">
+                                <Eye className="w-4 h-4" />
+                                <span>Screenshot available</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Review Details Panel */}
+              <div>
+                {selectedReview ? (
+                  <Card className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700">
+                    <CardHeader>
+                      <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Review Details
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Customer</Label>
+                        <p className="text-gray-900 dark:text-white">{selectedReview.customerName}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{selectedReview.customerEmail}</p>
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Rating</Label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <div className="flex">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star 
+                                key={i} 
+                                className={`w-4 h-4 ${
+                                  i < selectedReview.rating 
+                                    ? 'text-yellow-500 fill-current' 
+                                    : 'text-gray-300'
+                                }`} 
+                              />
+                            ))}
+                          </div>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {selectedReview.rating}/5
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Review Text</Label>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                          {selectedReview.reviewText}
+                        </p>
+                      </div>
+
+                      {selectedReview.businessResponse && (
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Business Response</Label>
+                          <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                            {selectedReview.businessResponse}
+                          </p>
+                        </div>
+                      )}
+
+                      {selectedReview.screenshotUrl && (
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Screenshot</Label>
+                          <div className="mt-2">
+                            <img
+                              src={selectedReview.screenshotUrl}
+                              alt="Review screenshot"
+                              className="max-w-full h-auto border border-gray-300 dark:border-gray-600 rounded"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedReview.status === 'pending' && (
+                        <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-600">
+                          <div>
+                            <Label htmlFor="adminComments">Admin Comments</Label>
+                            <Textarea
+                              id="adminComments"
+                              value={reviewComments}
+                              onChange={(e) => setReviewComments(e.target.value)}
+                              placeholder="Add comments about this review..."
+                              rows={3}
+                            />
+                          </div>
+                          
+                          <div className="flex space-x-2">
+                            <Button
+                              onClick={() => reviewMutation.mutate({
+                                reviewId: selectedReview.id,
+                                status: 'approved',
+                                comments: reviewComments
+                              })}
+                              disabled={reviewMutation.isPending}
+                              className="flex-1 bg-green-600 hover:bg-green-700"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              onClick={() => reviewMutation.mutate({
+                                reviewId: selectedReview.id,
+                                status: 'rejected',
+                                comments: reviewComments
+                              })}
+                              disabled={reviewMutation.isPending}
+                              variant="destructive"
+                              className="flex-1"
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-8 text-center">
+                      <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Select a review to view details and screenshots
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
