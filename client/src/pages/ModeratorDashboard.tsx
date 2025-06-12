@@ -28,6 +28,7 @@ import {
   Send,
   Eye
 } from "lucide-react";
+import Schedule from "@/pages/Schedule";
 
 export default function ModeratorDashboard() {
   const { toast } = useToast();
@@ -244,9 +245,10 @@ export default function ModeratorDashboard() {
         </div>
 
         <Tabs defaultValue="attendance" className="space-y-8">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="attendance">Attendance</TabsTrigger>
             <TabsTrigger value="trustpilot">Trustpilot Reviews</TabsTrigger>
+            <TabsTrigger value="schedule">Schedule</TabsTrigger>
           </TabsList>
 
           <TabsContent value="attendance">
@@ -688,6 +690,10 @@ export default function ModeratorDashboard() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="schedule">
+            <Schedule />
           </TabsContent>
         </Tabs>
       </main>
