@@ -48,6 +48,13 @@ export interface IStorage {
   getTrustpilotReviews(status?: string): Promise<TrustpilotReview[]>;
   getModeratorReviews(moderatorId: number): Promise<TrustpilotReview[]>;
   reviewTrustpilotReview(reviewId: number, adminId: number, status: string, adminComments?: string): Promise<void>;
+  
+  // Shift schedules
+  getAllSchedules(): Promise<ShiftSchedule[]>;
+  getSchedulesByTeam(team: string): Promise<ShiftSchedule[]>;
+  getUserSchedule(userId: number): Promise<ShiftSchedule | undefined>;
+  createSchedule(schedule: InsertShiftSchedule): Promise<ShiftSchedule>;
+  updateSchedule(scheduleId: number, schedule: Partial<InsertShiftSchedule>): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {

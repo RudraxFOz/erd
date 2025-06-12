@@ -88,6 +88,25 @@ export const trustpilotReviews = pgTable("trustpilot_reviews", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Shift schedules table
+export const shiftSchedules = pgTable("shift_schedules", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  agentName: varchar("agent_name").notNull(),
+  team: varchar("team").notNull(), // London, NY, Asia, Weekend
+  monday: varchar("monday").default("Off"),
+  tuesday: varchar("tuesday").default("Off"),
+  wednesday: varchar("wednesday").default("Off"),
+  thursday: varchar("thursday").default("Off"),
+  friday: varchar("friday").default("Off"),
+  saturday: varchar("saturday").default("Off"),
+  sunday: varchar("sunday").default("Off"),
+  timezone: varchar("timezone").default("GMT").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   password: true,
@@ -137,6 +156,20 @@ export const reviewReviewSchema = z.object({
   adminComments: z.string().optional(),
 });
 
+export const insertShiftScheduleSchema = createInsertSchema(shiftSchedules).pick({
+  userId: true,
+  agentName: true,
+  team: true,
+  monday: true,
+  tuesday: true,
+  wednesday: true,
+  thursday: true,
+  friday: true,
+  saturday: true,
+  sunday: true,
+  timezone: true,
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type AttendanceRecord = typeof attendanceRecords.$inferSelect;
@@ -146,3 +179,5 @@ export type InsertLoginLog = z.infer<typeof insertLoginLogSchema>;
 export type AdminAction = typeof adminActions.$inferSelect;
 export type TrustpilotReview = typeof trustpilotReviews.$inferSelect;
 export type InsertTrustpilotReview = z.infer<typeof insertTrustpilotReviewSchema>;
+export type ShiftSchedule = typeof shiftSchedules.$inferSelect;
+export type InsertShiftSchedule = z.infer<typeof insertShiftScheduleSchema>;
