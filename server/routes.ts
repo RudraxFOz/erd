@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupSession, setupAuthRoutes, requireAuth } from "./auth";
-import { insertAttendanceSchema, insertLoginLogSchema, insertTrustpilotReviewSchema, reviewReviewSchema } from "@shared/schema";
+import { insertAttendanceSchema, insertLoginLogSchema, insertTrustpilotReviewSchema, reviewReviewSchema, insertShiftScheduleSchema } from "@shared/schema";
 
 function getClientIP(req: any): string {
   return req.ip || 

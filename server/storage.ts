@@ -281,6 +281,55 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(trustpilotReviews.id, reviewId));
   }
+
+  async getAllSchedules(): Promise<ShiftSchedule[]> {
+    return await db
+      .select()
+      .from(shiftSchedules)
+      .orderBy(shiftSchedules.startDate);
+  }
+
+  async getSchedulesByTeam(team: string): Promise<ShiftSchedule[]> {
+    return await db
+      .select()
+      .from(shiftSchedules)
+      .where(eq(shiftSchedules.team, team))
+      .orderBy(shiftSchedules.startDate);
+  }
+
+  async getUserSchedule(userId: number): Promise<ShiftSchedule | undefined> {
+    const result = await db
+      .select()
+      .from(shiftSchedules)
+      .where(eq(shiftSchedules.userId, userId))
+      .orderBy(desc(shiftSchedules.startDate))
+      .limit(1);
+    
+    return result[0];
+  }
+
+  async createSchedule(schedule: InsertShiftSchedule): Promise<ShiftSchedule> {
+    const result = await db
+      .insert(shiftSchedules)
+      .values({
+        ...schedule,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .returning();
+    
+    return result[0];
+  }
+
+  async updateSchedule(scheduleId: number, schedule: Partial<InsertShiftSchedule>): Promise<void> {
+    await db
+      .update(shiftSchedules)
+      .set({
+        ...schedule,
+        updatedAt: new Date()
+      })
+      .where(eq(shiftSchedules.id, scheduleId));
+  }
 }
 
 export const storage = new DatabaseStorage();
